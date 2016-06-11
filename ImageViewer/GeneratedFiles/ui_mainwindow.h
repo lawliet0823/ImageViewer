@@ -17,6 +17,7 @@
 #include <QtWidgets/QListView>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QProgressBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QStatusBar>
@@ -32,8 +33,9 @@ public:
     QScrollArea *scrollArea;
     QWidget *scrollAreaWidgetContents;
     QListView *listView;
-    QPushButton *btnLoadImage;
     QPushButton *btnReadFile;
+    QPushButton *btnFaceTracking;
+    QProgressBar *progressBar;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -47,21 +49,25 @@ public:
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         scrollArea = new QScrollArea(centralWidget);
         scrollArea->setObjectName(QStringLiteral("scrollArea"));
-        scrollArea->setGeometry(QRect(30, 30, 791, 661));
+        scrollArea->setGeometry(QRect(30, 30, 781, 541));
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 789, 659));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 779, 539));
         scrollArea->setWidget(scrollAreaWidgetContents);
         listView = new QListView(centralWidget);
         listView->setObjectName(QStringLiteral("listView"));
         listView->setGeometry(QRect(860, 30, 181, 271));
-        btnLoadImage = new QPushButton(centralWidget);
-        btnLoadImage->setObjectName(QStringLiteral("btnLoadImage"));
-        btnLoadImage->setGeometry(QRect(870, 480, 161, 61));
         btnReadFile = new QPushButton(centralWidget);
         btnReadFile->setObjectName(QStringLiteral("btnReadFile"));
-        btnReadFile->setGeometry(QRect(870, 380, 161, 61));
+        btnReadFile->setGeometry(QRect(870, 450, 161, 61));
+        btnFaceTracking = new QPushButton(centralWidget);
+        btnFaceTracking->setObjectName(QStringLiteral("btnFaceTracking"));
+        btnFaceTracking->setGeometry(QRect(870, 340, 161, 61));
+        progressBar = new QProgressBar(centralWidget);
+        progressBar->setObjectName(QStringLiteral("progressBar"));
+        progressBar->setGeometry(QRect(150, 620, 381, 31));
+        progressBar->setValue(0);
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -82,8 +88,8 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0));
-        btnLoadImage->setText(QApplication::translate("MainWindow", "Load Image", 0));
         btnReadFile->setText(QApplication::translate("MainWindow", "Read File", 0));
+        btnFaceTracking->setText(QApplication::translate("MainWindow", "Face Tracking", 0));
     } // retranslateUi
 
 };

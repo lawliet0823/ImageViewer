@@ -8,6 +8,7 @@
 #include <qfiledialog.h>
 #include <qmessagebox.h>
 #include <qstandarditemmodel.h>
+#include "FaceTracking.h"
 
 namespace Ui {
 	class MainWindow;
@@ -23,7 +24,7 @@ public:
 
 private slots:
 	void readFile();
-	void loadImage();
+	void faceTracking();
 	void listItemSelected(const QModelIndex&);
 
 private:
@@ -33,6 +34,9 @@ private:
 	QStandardItemModel *stdItemModel;
 	int grid_x = 0;
 	int grid_y = 0;
+	FaceTracking *face_track;
+	QMap<QString, QString> fileMap;
+
 };
 
 #endif // MAINWINDOW_H

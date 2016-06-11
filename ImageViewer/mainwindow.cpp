@@ -11,8 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
 	widget = new QWidget;
 	stdItemModel = new QStandardItemModel(this);
 	// Signal and Slot
+	QObject::connect(ui->btnFaceTracking, SIGNAL(clicked()), this, SLOT(faceTracking()));
 	QObject::connect(ui->btnReadFile, SIGNAL(clicked()), this, SLOT(readFile()));
-	QObject::connect(ui->btnLoadImage, SIGNAL(clicked()), this, SLOT(loadImage()));
 	QObject::connect(ui->listView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(listItemSelected(const QModelIndex&)));
 }
 
@@ -23,11 +23,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::readFile() {
 	// Check listview state
+	stdItemModel->removeRows(0, stdItemModel->rowCount());
 	QString dirname = QFileDialog::getExistingDirectory(this, tr("Select Clip Directory"));
 	QStringList strList;
 	QDirIterator it_dir(dirname);
 	while (it_dir.hasNext()) {
 		strList.append(it_dir.next());
+		qDebug() << it_dir.fileName().toUtf8();
 	}
 	for (size_t i = 0; i < strList.size(); i++) {
 		QString string_item = static_cast<QString>(strList.at(i));
@@ -38,11 +40,14 @@ void MainWindow::readFile() {
 		stdItemModel->appendRow(item);
 	}
 	ui->listView->setModel(stdItemModel);
-
 }
 
-void MainWindow::loadImage() {
-
+void MainWindow::faceTracking() {
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open Video"));
+	string convertString = filename.toUtf8().constData();
+	face_track = new FaceTracking();
+	face_track->setVideoName(convertString);
+	face_track->run();
 }
 
 void MainWindow::listItemSelected(const QModelIndex &index) {
