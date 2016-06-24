@@ -8,7 +8,14 @@
 #include <qfiledialog.h>
 #include <qmessagebox.h>
 #include <qstandarditemmodel.h>
+#include <ImageLabel.h>
+#include <map>
 #include "FaceTracking.h"
+#include "FaceAssessment.h"
+#include "FaceRecognition.h"
+#include "ImageConvert.h"
+
+using namespace std;
 
 namespace Ui {
 	class MainWindow;
@@ -23,8 +30,10 @@ public:
 	~MainWindow();
 
 private slots:
-	void readFile();
 	void faceTracking();
+	void faceAssessment();
+	void createModel();
+	void readFile();
 	void listItemSelected(const QModelIndex&);
 
 private:
@@ -35,8 +44,11 @@ private:
 	int grid_x = 0;
 	int grid_y = 0;
 	FaceTracking *face_track;
-	QMap<QString, QString> fileMap;
-
+	FaceAssessment *face_assess;
+	FaceRecognition *face_recog;
+	map<QString, QString> dirMap;		// Directory Name, Directory Path
+	map<QString, vector<Mat>> selectMap;
+	vector<Mat> trainImageVec;
 };
 
 #endif // MAINWINDOW_H

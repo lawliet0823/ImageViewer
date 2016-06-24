@@ -5,12 +5,10 @@
 #include <opencv2\core\core.hpp>
 #include <opencv2\highgui\highgui.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
-#include <iostream>
 #include <direct.h>
 #include <sys\stat.h>
 
 using namespace cv;
-using namespace std;
 
 struct TLD_Info {
 	TLD *tld;

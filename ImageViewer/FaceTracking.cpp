@@ -100,7 +100,7 @@ void FaceTracking::run()
 	VideoCapture capture;
 	capture.open(videoName);
 	if (!capture.isOpened()) {
-		cout << "Can't read video" << endl;
+		return;
 	}
 	// vector<TLD*> vTLD;
 	vector<TLD_Info> vtld_info;
