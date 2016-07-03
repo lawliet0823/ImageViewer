@@ -2,10 +2,8 @@
 
 FaceRecognition::FaceRecognition()
 {
-	face_cascade_name = "haarcascade_frontalface_alt_tree.xml";
-	landmarkModel = flandmark_init("flandmark_model.dat");
-	feature_total_num = 3 * 7 * 16 * 59 + 1;
-	cell_size = 36;
+	face_cascade_name = "Resources/haarcascade_frontalface_alt.xml";
+	landmarkModel = flandmark_init("Resources/flandmark_model.dat");
 
 	// SVM parameter setup
 	_param.svm_type = C_SVC;
@@ -63,6 +61,7 @@ Mat FaceRecognition::lbpFeature(Mat image)
 {
 	Mat dst;
 	GaussianBlur(image, dst, Size(5, 5), 5, 3, BORDER_CONSTANT);
+	//Mat lbpImage = OLBP(dst);
 	Mat lbpImage = ELBP(dst, 2, 8);
 	return lbpImage;
 }
@@ -77,18 +76,25 @@ inline bool FaceRecognition::isImgOutofBound(int x, int y, int crop_size, int im
 
 void FaceRecognition::train_model(int ptrain_num)
 {
-	_prob.l = ptrain_num;
+	int feature_total_num = 3 * 7 * 16 * 59 + 1;
+	int cell_size = 36;
+	_prob.l = ptrain_num * 2;
 	_prob.y = Malloc(double, _prob.l);
 	svm_node **node = Malloc(svm_node*, _prob.l);
 	int train_num_count = 0;
 	for (size_t i = 0; i < trainImage.size(); i++) {
 		Mat face_image = trainImage.at(i);
-		cvtColor(face_image, face_image, CV_RGB2GRAY);
+		//face_image.convertTo(face_image, COLOR_BGR2GRAY);
+		cvtColor(face_image, face_image, CV_BGR2GRAY);
 		equalizeHist(face_image, face_image);
+		if (face_image.empty()) {
+			cout << " Image read fail" << endl;
+		}
 		int feature_index = 0;
 		svm_node *node_space = Malloc(svm_node, feature_total_num);
+
 		// Face Detection
-		vector<Rect> faces = faceDetection(face_image);
+		faces = faceDetection(face_image);
 		if (faces.size() == 0) {
 			for (int i = 0; i < feature_total_num - 1; i++) {
 				node_space[i].index = i;
@@ -136,10 +142,7 @@ void FaceRecognition::train_model(int ptrain_num)
 						Rect cropRect = getCropImageBound(landmarks[landmark_element] * (1 - 0.2*scale_num),
 							landmarks[landmark_element + 1] * (1 - 0.2*scale_num), cell_size);
 						Mat crop_Img = scaleImage(cropRect);
-						//imshow("", scaleImage);
-						//waitKey(0);
-
-						Mat mat_pca(16, 59, CV_32FC1);
+						//Mat mat_pca(16, 59, CV_32FC1);
 						int sample_count = 0;
 						for (size_t cell_y = 0; cell_y < cell_size; cell_y += 9) {
 							for (size_t cell_x = 0; cell_x < cell_size; cell_x += 9) {
@@ -184,6 +187,25 @@ void FaceRecognition::train_model(int ptrain_num)
 		}
 	}
 
+	ifstream infile("Resources/Feature.txt");
+	string tempString;
+	for (size_t counter = 0; counter < ptrain_num; counter++) {
+		svm_node *node_space = Malloc(svm_node, feature_total_num);
+		getline(infile, tempString);
+		istringstream iss(tempString);
+		vector<int> tokens{ istream_iterator<int>{iss},istream_iterator<int>{} };
+		for (size_t element = 0; element < tokens.size() - 1; element++) {
+			node_space[element].index = element;
+			node_space[element].value = tokens[element];
+		}
+		cout << tokens.size() << endl;
+		node_space[feature_total_num - 1].index = -1;
+		node[train_num_count] = node_space;
+		_prob.y[train_num_count] = 2;
+		++train_num_count;
+	}
+	infile.close();
+
 	/*
 	for (int i = 0; i < feature_total_num - 1; i++) {
 		node_space[i].index = i;
@@ -198,5 +220,10 @@ void FaceRecognition::train_model(int ptrain_num)
 
 	_prob.x = node;
 	svm_model *model = svm_train(&_prob, &_param);
-	svm_save_model("model.txt", model);
+	svm_save_model("Resources/model.txt", model);
+}
+
+void FaceRecognition::setTrainImage(vector<Mat> pTrainImage)
+{
+	trainImage = pTrainImage;
 }

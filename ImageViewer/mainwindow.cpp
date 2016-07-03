@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui(new Ui::MainWindow)
 {
 	face_assess = new FaceAssessment();
+	face_recog = new FaceRecognition();
 	ui->setupUi(this);
 	// Layout Setup
 	layout = new QGridLayout;
@@ -66,7 +67,6 @@ void MainWindow::faceAssessment() {
 	//multimap<QString, Mat> fileMultimap;
 	map<QString, vector<Mat>> fileMatMap;
 	map<QString, QString>::iterator it_mapss = dirMap.begin();
-	//cout << dirMap.size();
 	for (; it_mapss != dirMap.end(); it_mapss++) {
 		vector<Mat> tempMatMap;
 		QDirIterator it_dir(it_mapss->second);
@@ -83,45 +83,89 @@ void MainWindow::faceAssessment() {
 		//qDebug() << it_mapss->first << "	" << tempMatMap.size();
 		fileMatMap.insert(make_pair(it_mapss->first, tempMatMap));
 	}
+	
 	face_assess->setSelectMap(fileMatMap);
 	face_assess->run();
 	selectMap = face_assess->getSelectMap();
 }
 
 void MainWindow::createModel() {
-
+	// clear vector element
+	trainImageVec.swap(vector<Mat>());
+	map<QString, vector<ImageLabel*>>::iterator it_label = labelMap.begin();
+	for (; it_label != labelMap.end(); it_label++) {
+		vector<ImageLabel*> labelVector = it_label->second;
+		for (size_t i = 0; i < labelVector.size(); i++) {
+			if (labelVector.at(i)->isSelected()) {
+				trainImageVec.push_back(labelVector.at(i)->getImage());
+			}
+		}
+	}
+	face_recog->setTrainImage(trainImageVec);
+	face_recog->train_model(trainImageVec.size());
 }
 
 void MainWindow::listItemSelected(const QModelIndex &index) {
 	if (index.isValid()) {
+
 		if (layout != NULL) {
 			QLayoutItem *item;
 			while ((item = layout->takeAt(0)) != NULL) {
-				delete item->widget();
+				item->widget()->hide();
+				//delete item->widget();
 				delete item;
 			}
 			grid_x = 0;
 			grid_y = 0;
 		}
+
 		//qDebug() << index.data().toString();
-		vector<Mat> selectVector = selectMap.find(index.data().toString())->second;
-		for (size_t i = 0; i < selectVector.size(); i++) {
-			ImageLabel *imgLabel = new ImageLabel();
-			connect(imgLabel, SIGNAL(clicked()), imgLabel, SLOT(setBorder()));
-			QPixmap pix = ASM::cvMatToQPixmap(selectVector.at(i));
-			imgLabel->setPixmap(pix);
-			imgLabel->setFixedSize(250, 250);
-			layout->addWidget(imgLabel, grid_x, grid_y);
-			widget->setLayout(layout);
-			ui->imageScroll->setWidget(widget);
-			if (grid_y < 3)
-				grid_y++;
-			if (grid_y == 3) {
-				grid_y = 0;
-				grid_x++;
+		// Checking system label  
+		if (labelMap.find(index.data().toString()) == labelMap.end()) {
+			qDebug() << index.data().toString();
+			if (selectMap.find(index.data().toString()) == selectMap.end()) {
+				return;
+			}
+			vector<ImageLabel*> labelVecor;
+			vector<Mat> selectVector = selectMap.find(index.data().toString())->second;
+			for (size_t i = 0; i < selectVector.size(); i++) {
+				ImageLabel *imgLabel = new ImageLabel();
+				connect(imgLabel, SIGNAL(clicked()), imgLabel, SLOT(setBorderSlot()));
+				imgLabel->setImage(selectVector.at(i));
+				QPixmap pix = ASM::cvMatToQPixmap(selectVector.at(i));
+				imgLabel->setPixmap(pix);
+				imgLabel->setFixedSize(250, 250);
+				labelVecor.push_back(imgLabel);
+				layout->addWidget(imgLabel, grid_x, grid_y);
+				widget->setLayout(layout);
+				ui->imageScroll->setWidget(widget);
+				if (grid_y < 3)
+					grid_y++;
+				if (grid_y == 3) {
+					grid_y = 0;
+					grid_x++;
+				}
+			}
+			labelMap.insert(make_pair(index.data().toString(), labelVecor));
+			qDebug() << labelMap.size();
+		}
+		else {
+			vector<ImageLabel*> tempLabelVecor = labelMap.find(index.data().toString())->second;
+			//qDebug() << labelVecor.at(0) << " else";
+			for (size_t i = 0; i < tempLabelVecor.size(); i++) {
+				tempLabelVecor.at(i)->show();
+				layout->addWidget(tempLabelVecor.at(i), grid_x, grid_y);
+				widget->setLayout(layout);
+				ui->imageScroll->setWidget(widget);
+				//ui->imageScroll->setLayout(layout);
+				if (grid_y < 3)
+					grid_y++;
+				if (grid_y == 3) {
+					grid_y = 0;
+					grid_x++;
+				}
 			}
 		}
-
 		/*
 		QStringList strList;
 		QDirIterator it_dir(dirMap.find(index.data().toString())->second);

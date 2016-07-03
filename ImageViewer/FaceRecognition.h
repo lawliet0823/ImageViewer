@@ -1,6 +1,11 @@
 #ifndef FACERECOGNITION_H
 #define FACERECOGNITION_H
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iterator>
+
 #include <opencv2\opencv.hpp>
 #include <opencv2\core\core.hpp>
 #include <opencv2\highgui\highgui.hpp>
@@ -30,12 +35,11 @@ public:
 	inline bool isImgOutofBound(int, int, int, int , int);
 	void train_model(int);
 	void recognition();
+	void setTrainImage(vector<Mat>);
 
 private:
 	String face_cascade_name;
 	FLANDMARK_Model *landmarkModel;
-	int feature_total_num;
-	int cell_size;
 	int train_num;
 
 	// SVM setup
@@ -43,6 +47,7 @@ private:
 	struct svm_problem _prob;
 
 	vector<Mat> trainImage;
+	vector<Rect> faces;
 };
 
 #endif // ! FACERECOGNITION_H

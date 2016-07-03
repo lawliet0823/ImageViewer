@@ -3,6 +3,7 @@
 #include <opencv2\core\core.hpp>
 #include <opencv2\highgui\highgui.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
+#include <iostream>
 #include <algorithm>
 #include <map>
 #include <qstring.h>
@@ -48,6 +49,7 @@ private:
 	double progressMin;
 	double progressMax;
 	map<QString, vector<Mat>> selectMap;
+	vector<Rect> faces;
 };
 
 

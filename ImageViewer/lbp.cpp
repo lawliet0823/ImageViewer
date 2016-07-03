@@ -52,7 +52,7 @@ void lbp::ELBP_(const Mat& src, Mat& dst, int radius, int neighbors) {
 			for(int j=radius;j < src.cols-radius;j++) {
 				float t = w1*src.at<_Tp>(i+fy,j+fx) + w2*src.at<_Tp>(i+fy,j+cx) + w3*src.at<_Tp>(i+cy,j+fx) + w4*src.at<_Tp>(i+cy,j+cx);
 				// we are dealing with floating point precision, so add some little tolerance
-				dst.at<unsigned int>(i-radius,j-radius) += ((t > src.at<_Tp>(i,j)) && (abs(t-src.at<_Tp>(i,j)) > std::numeric_limits<float>::epsilon())) << n;
+				dst.at<signed int>(i-radius,j-radius) += ((t > src.at<_Tp>(i,j)) && (abs(t-src.at<_Tp>(i,j)) > std::numeric_limits<float>::epsilon())) << n;
 			}
 		}
 	}

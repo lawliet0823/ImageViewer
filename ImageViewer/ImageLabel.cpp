@@ -19,7 +19,15 @@ void ImageLabel::setSelected(bool pSelected) {
 	selected = pSelected;
 }
 
-void ImageLabel::setBorder() {
+void ImageLabel::setImage(Mat pImage) {
+	image = pImage;
+}
+
+Mat ImageLabel::getImage() {
+	return image;
+}
+
+void ImageLabel::setBorderSlot() {
 	if (selected) {
 		this->setStyleSheet("");
 		selected = false;

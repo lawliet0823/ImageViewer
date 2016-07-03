@@ -16,12 +16,12 @@ FaceAssessment::~FaceAssessment()
 vector<Rect> FaceAssessment::faceDetection(Mat image)
 {
 	CascadeClassifier face_cascade;
-	vector<Rect> faces;
+	vector<Rect> rect_faces;
 	if (!face_cascade.load(face_cascade_name)) {
 		printf("Error Loading");
 	}
-	face_cascade.detectMultiScale(image, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
-	return faces;
+	face_cascade.detectMultiScale(image, rect_faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
+	return rect_faces;
 }
 
 double * FaceAssessment::landmarkDetection(Mat image, Rect rect_face)
@@ -59,42 +59,28 @@ double FaceAssessment::caculateSymmetry(Mat image, double *landmarks)
 	double symmetryValue = 0;
 	for (size_t landmark_element = 2; landmark_element < 13; landmark_element += 4) {
 		Rect cropRectL = getCropImageBound(static_cast<int>(landmarks[landmark_element]),
-			static_cast<int>(landmarks[landmark_element + 1]), 32);
+			static_cast<int>(landmarks[landmark_element + 1]), 16);
 		Rect cropRectR = getCropImageBound(static_cast<int>(landmarks[landmark_element + 2]),
-			static_cast<int>(landmarks[landmark_element + 3]), 32);
+			static_cast<int>(landmarks[landmark_element + 3]), 16);
 		Mat crop_ImgL = image(cropRectL);
 		Mat crop_ImgR = image(cropRectR);
 
-		// HOG Descriptor
-		HOGDescriptor hog(Size(32, 32), Size(16, 16), Size(8, 8), Size(4, 4), 9);
-		vector<float> dersL;
-		vector<float> dersR;
-		vector<Point> locsL;
-		vector<Point> locsR;
-		hog.compute(crop_ImgL, dersL, Size(4, 4), Size(0, 0), locsL);
-		hog.compute(crop_ImgR, dersR, Size(4, 4), Size(0, 0), locsR);
-		Mat hogFeatL;
-		Mat hogFeatR;
-		hogFeatL.create(dersL.size(), 1, CV_32FC1);
-		hogFeatR.create(dersR.size(), 1, CV_32FC1);
-
-		for (size_t i = 0; i < dersL.size(); i++) {
-			hogFeatL.at<float>(i, 0) = dersL.at(i);
-		}
-		for (size_t i = 0; i < dersR.size(); i++) {
-			hogFeatR.at<float>(i, 0) = dersR.at(i);
-		}
-
-		int nHistSize = 65536;
-		float fRange[] = { 0.00f, 1.00f };
-		const float* fHistRange = { fRange };
-		Mat matHistL;
-		Mat matHistR;
-		calcHist(&hogFeatL, 1, 0, Mat(), matHistL, 1, &nHistSize, &fHistRange);
-		calcHist(&hogFeatR, 1, 0, Mat(), matHistR, 1, &nHistSize, &fHistRange);
-		symmetryValue += compareHist(matHistL, matHistR, CV_COMP_INTERSECT);
+		int histSize = 256;
+		float range[] = { 0, 255 };
+		const float* histRange = { range };
+		cvtColor(crop_ImgL, crop_ImgL, CV_RGB2GRAY);
+		cvtColor(crop_ImgR, crop_ImgR, CV_RGB2GRAY);
+		//equalizeHist(crop_ImgL, crop_ImgL);
+		//equalizeHist(crop_ImgR, crop_ImgR);
+		Mat lHist;
+		Mat rHist;
+		calcHist(&crop_ImgL, 1, 0, Mat(), lHist, 1, &histSize, &histRange);
+		calcHist(&crop_ImgR, 1, 0, Mat(), rHist, 1, &histSize, &histRange);
+		//normalize(lHist, lHist, 1.0, 0.0, NORM_MINMAX);
+		//normalize(rHist, rHist, 1.0, 0.0, NORM_MINMAX);
+		symmetryValue += compareHist(lHist, rHist, CV_COMP_CHISQR);
 	}
-	symmetryValue /= 7;
+	symmetryValue /= 3;
 	return symmetryValue;
 }
 
@@ -174,7 +160,7 @@ map<int, Mat> FaceAssessment::caculateSymmetry(map<int, Mat> infoMap, map<int, d
 	vector<pair<int, float>> vec(mfs_score.begin(), mfs_score.end());
 	sort(vec.begin(), vec.end(), CompareByValue());
 
-	for (size_t i = 0; i < 10; i++) {
+	for (size_t i = 0; i < infoMap.size(); i++) {
 		returnMap.insert(make_pair(vec.at(i).first, infoMap.find(vec.at(i).first)->second));
 	}
 	/*
@@ -244,8 +230,8 @@ map<QString, Mat> FaceAssessment::caculateBrightness(map<QString, Mat> infoMap)
 Mat FaceAssessment::rotateImage(Mat src, double angle)
 {
 	Mat dst;
-	Point2f pt(src.cols / 2., src.rows / 2.);
-	Mat r = getRotationMatrix2D(pt, -8, 1.0);
+	Point2f pt(src.cols / 2, src.rows / 2);
+	Mat r = getRotationMatrix2D(pt, angle, 1.0);
 	warpAffine(src, dst, r, Size(src.cols, src.rows));
 	return dst;
 }
@@ -292,18 +278,23 @@ void FaceAssessment::run()
 	}
 	map<QString, vector<Mat>>::iterator it_select = selectMap.begin();
 	map<QString, vector<Mat>> returnMap; // final return map
+	//vector<Rect> faces;	// temporary vector
+	double *landmarks;
 	for (; it_select != selectMap.end(); it_select++) {
 		vector<Mat> tempMatVector = it_select->second;
+		/*
+		if (tempMatVector.size() < 10) {
+			continue;
+		}
+		*/
 		vector<Mat> selectMatVector;	// final Mat vector
 		map<int, Mat> imageMap;			// put into symmetry function
 		map<int, double*> landMap;		// put into symmetry function
 		int count = 1;
 		//cout << tempMatVector.size() << endl;
+
 		for (size_t element = 0; element < tempMatVector.size(); element++) {
-			//cout << i << endl;
 			Mat face_image = tempMatVector.at(element);
-			//imshow("", face_image);
-			//waitKey(50);
 			if (face_image.empty()) {
 				cout << "Read Error!" << endl;
 				continue;
@@ -312,14 +303,14 @@ void FaceAssessment::run()
 				Mat grey_face_image;
 				cvtColor(face_image, grey_face_image, CV_RGB2GRAY);
 				// Face Detection
-				vector<Rect> faces = faceDetection(face_image);
+				faces = faceDetection(face_image);
 				if (faces.empty()) {
 					cout << "Face Detect Error!" << endl;
 					continue;
 				}
 
 				// Landmark detection
-				double *landmarks = landmarkDetection(grey_face_image, faces.at(0));
+				landmarks = landmarkDetection(grey_face_image, faces.at(0));
 				if (*landmarks < 0) {
 					cout << "Landmark Detect Error!" << endl;
 					continue;
@@ -328,18 +319,31 @@ void FaceAssessment::run()
 				landMap.insert(make_pair(count, landmarks));
 				++count;
 			}
-			cout << tempMatVector.size();
+			//cout << tempMatVector.size();
+
 		}
 		/*
-		cout << "end" << endl;
+		if (imageMap.size() < 10) {
+			continue;
+		}
+		*/
 		imageMap = caculateSymmetry(imageMap, landMap);
 		map<int, Mat>::iterator it = imageMap.begin();
 		for (; it != imageMap.end(); it++) {
 			selectMatVector.push_back(it->second);
 		}
 		returnMap.insert(make_pair(it_select->first, selectMatVector));
-		*/
+		//vector<Mat>().swap(tempMatVector);
+		//vector<Mat>().swap(selectMatVector);
+		//map<int, Mat>().swap(imageMap);
+		//map<int, double*>().swap(landMap);
 	}
+	//vector<Rect>().swap(faces);
+	cout << "Return Map Size: " << returnMap.size() << endl;
 	selectMap = returnMap;
+	//vector<Rect>().swap(faces);
+	//faces.clear();
+	cout << "Face number: " << faces.size() << endl;
+	cout << "finish" << endl;
 }
 

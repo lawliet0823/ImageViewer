@@ -1,7 +1,11 @@
 #ifndef IMAGELABEL_H
 #define IMAGELABEL_H
 
+#include <QtCore/QtCore>
 #include <qlabel.h>
+#include <opencv2\core\core.hpp>
+
+using namespace cv;
 
 class ImageLabel : public QLabel
 {
@@ -12,18 +16,21 @@ public:
 	~ImageLabel();
 	bool isSelected();
 	void setSelected(bool);
+	void setImage(Mat);
+	Mat getImage();
 
 signals:
 	void clicked();
 
-private slots:
-	void setBorder();
+	private slots:
+	void setBorderSlot();
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
 
 private:
 	bool selected;
+	Mat image;
 };
 
 #endif // IMAGELABEL_H
