@@ -8,16 +8,19 @@ MainWindow::MainWindow(QWidget *parent)
 	face_assess = new FaceAssessment();
 	face_recog = new FaceRecognition();
 	ui->setupUi(this);
+
 	// Layout Setup
 	layout = new QGridLayout;
 	widget = new QWidget;
 	stdItemModel = new QStandardItemModel(this);
+
 	// Signal and Slot
 	QObject::connect(ui->btnFaceTracking, SIGNAL(clicked()), this, SLOT(faceTracking()));
 	QObject::connect(ui->btnReadFile, SIGNAL(clicked()), this, SLOT(readFile()));
 	QObject::connect(ui->listView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(listItemSelected(const QModelIndex&)));
 	QObject::connect(ui->btnFaceSelect, SIGNAL(clicked()), this, SLOT(faceAssessment()));	// Not yet
 	QObject::connect(ui->btnCreateModel, SIGNAL(clicked()), this, SLOT(createModel()));
+	QObject::connect(ui->btnFaceRecognition, SIGNAL(clicked()), this, SLOT(faceRecognition()));
 }
 
 MainWindow::~MainWindow()
@@ -27,12 +30,18 @@ MainWindow::~MainWindow()
 
 // call Face Tracking Program
 void MainWindow::faceTracking() {
+	// Read Video File
 	QString filename = QFileDialog::getOpenFileName(this, tr("Open Video"));
+
+	// Check File Name is empty or not
 	if (filename.size() == 0)
 		return;
+	// QString to String
 	string convertString = filename.toUtf8().constData();
 	face_track = new FaceTracking();
 	face_track->setVideoName(convertString);
+	// TODO XXX: need to check convertString value
+	//face_track->setDirName(convertString);
 	face_track->run();
 }
 
@@ -50,7 +59,7 @@ void MainWindow::readFile() {
 			continue;
 		}
 		dirMap.insert(make_pair(it_dir.fileName(), it_dir.filePath()));
-		//qDebug() << it_dir.filePath();
+		//qDebug() << it_dir.fileName();
 		QStandardItem *item = new QStandardItem(it_dir.fileName());
 		stdItemModel->appendRow(item);
 	}
@@ -64,50 +73,63 @@ void MainWindow::faceAssessment() {
 		meg.exec();
 		return;
 	}
-	//multimap<QString, Mat> fileMultimap;
-	map<QString, vector<Mat>> fileMatMap;
+	int num = 200;
+	int counter = 0;
+	ui->progressBar->setRange(0, num);
+	map<QString, map<QString, Mat>> tempMap;
+	//map<QString, vector<Mat>> fileMatMap;
 	map<QString, QString>::iterator it_mapss = dirMap.begin();
 	for (; it_mapss != dirMap.end(); it_mapss++) {
-		vector<Mat> tempMatMap;
+		//vector<Mat> tempMatMap;
+		map<QString, Mat> assessMap;
 		QDirIterator it_dir(it_mapss->second);
 		while (it_dir.hasNext()) {
 			it_dir.next();
 			if (it_dir.fileName() == "." || it_dir.fileName() == "..") {
 				continue;
 			}
+			// Read Image
 			Mat image = imread(it_dir.filePath().toUtf8().toStdString());
-			tempMatMap.push_back(image);
-			// make_pair(DirName, image)
-			//qDebug() << it_dir.filePath();
+			assessMap.insert(make_pair(it_dir.filePath(), image));
+			++counter;
+			ui->progressBar->setValue(counter);
+			//tempMatMap.push_back(image);
 		}
-		//qDebug() << it_mapss->first << "	" << tempMatMap.size();
-		fileMatMap.insert(make_pair(it_mapss->first, tempMatMap));
+		tempMap.insert(make_pair(it_mapss->first, assessMap));
+		//fileMatMap.insert(make_pair(it_mapss->first, tempMatMap));
 	}
-	
-	face_assess->setSelectMap(fileMatMap);
+	face_assess->setAssessMap(tempMap);
 	face_assess->run();
 	selectMap = face_assess->getSelectMap();
+	ui->progressBar->setValue(num);
+	cout << "Finish" << endl;
 }
 
 void MainWindow::createModel() {
 	// clear vector element
 	trainImageVec.swap(vector<Mat>());
 	map<QString, vector<ImageLabel*>>::iterator it_label = labelMap.begin();
+	int total = labelMap.size() + 10;
+	ui->progressBar->setRange(0, total);
+	ui->progressBar->reset();
+	int counter = 0;
 	for (; it_label != labelMap.end(); it_label++) {
 		vector<ImageLabel*> labelVector = it_label->second;
 		for (size_t i = 0; i < labelVector.size(); i++) {
 			if (labelVector.at(i)->isSelected()) {
 				trainImageVec.push_back(labelVector.at(i)->getImage());
+				++counter;
+				ui->progressBar->setValue(counter);
 			}
 		}
 	}
 	face_recog->setTrainImage(trainImageVec);
 	face_recog->train_model(trainImageVec.size());
+	ui->progressBar->setValue(total);
 }
 
 void MainWindow::listItemSelected(const QModelIndex &index) {
 	if (index.isValid()) {
-
 		if (layout != NULL) {
 			QLayoutItem *item;
 			while ((item = layout->takeAt(0)) != NULL) {
@@ -176,7 +198,7 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 			ImageLabel *imgLabel = new ImageLabel();
 			//QLabel *qlabel = new QLabel(this);
 			// Set Signal and SLOT
-			connect(imgLabel, SIGNAL(clicked()), imgLabel, SLOT(setBorder()));
+			connect(imgLabel, SIGNAL(clicked()), imgLabel, SLOT(setBorderSlot()));
 			QString string_item = static_cast<QString>(strList.at(i));
 
 			if (string_item.contains(index.data().toString() + "/.") || string_item.contains(index.data().toString() + "/..")) {
@@ -199,4 +221,9 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 		*/
 	}
 
+}
+
+void MainWindow::faceRecognition() {
+	QThread::sleep(5);
+	ui->outputLabel->setText("Clip01");
 }

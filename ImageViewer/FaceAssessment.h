@@ -28,16 +28,15 @@ public:
 	double *landmarkDetection(Mat, Rect);
 	Rect getCropImageBound(double, double, int);
 	double getSkewness(double*);
-	double caculateSymmetry(double*);
-	double caculateSymmetry(Mat, double*);
-	double caculateSymmetry(Mat, double*, Rect);
-	map<int, Mat> caculateSymmetry(map<int, Mat> infoMap, map<int, double*> landMap);
+	float caculateSymmetry(Mat);
+	float caculateSharpness(Mat image);
+	map<QString, Mat> caculateSymmetry(map<QString, Mat>);
 	map<QString, Mat> caculateSharpness(map<QString, Mat>);
 	map<QString, Mat> caculateBrightness(map<QString, Mat>);
 	Mat rotateImage(Mat, double);
-	double* landmarkRotation(double *, double, double, double);
+	double *landmarkRotation(double *, double, double, double);
 
-	void setSelectMap(map<QString, vector<Mat>>);
+	void setAssessMap(map<QString, map<QString, Mat>>);
 	map<QString, vector<Mat>> getSelectMap();
 	void setProgressMin(double);
 	void setProgressMax(double);
@@ -48,8 +47,10 @@ private:
 	FLANDMARK_Model *landmarkModel;
 	double progressMin;
 	double progressMax;
+	map<QString, map<QString, Mat>> assessMap;
 	map<QString, vector<Mat>> selectMap;
 	vector<Rect> faces;
+	int total_count;
 };
 
 

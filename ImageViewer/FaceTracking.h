@@ -5,6 +5,7 @@
 #include <opencv2\core\core.hpp>
 #include <opencv2\highgui\highgui.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
+#include <iostream>
 #include <direct.h>
 #include <sys\stat.h>
 
@@ -22,21 +23,21 @@ class FaceTracking {
 public:
 	FaceTracking();
 	~FaceTracking();
+	vector<Rect> faceDetection(Mat);
 	void createDirectory(VideoCapture &, FileStorage &, Mat &, vector<Rect> &, vector<TLD_Info> &, int &, double &, string);
 	void setDirName(string);
 	void setMaxValue(double);
 	void setVideoName(string);
 	void setTLD_Info(TLD_Info&, TLD*, int, int, int);
-	void setVideoCapture(String);
 	void freeTLD_Info(vector<TLD_Info> &);
 	void run();
-	vector<Rect> faceDetection(Mat);
 
 private:
 	double max_value;
 	string face_cascade_name;
 	string videoName;
 	string dirName;
+	vector<Rect> faces;
 };
 
 

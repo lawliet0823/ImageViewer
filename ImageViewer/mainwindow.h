@@ -32,6 +32,7 @@ public:
 	private slots:
 	void faceTracking();
 	void faceAssessment();
+	void faceRecognition();
 	void createModel();
 	void readFile();
 	void listItemSelected(const QModelIndex&);

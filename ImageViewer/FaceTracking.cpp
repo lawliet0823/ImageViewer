@@ -11,13 +11,25 @@ FaceTracking::~FaceTracking()
 
 }
 
+vector<Rect> FaceTracking::faceDetection(Mat frame)
+{
+	CascadeClassifier face_cascade;
+	vector<Rect> detect_faces;
+	if (!face_cascade.load(face_cascade_name)) {
+		printf("Error Loading");
+	}
+	face_cascade.detectMultiScale(frame, detect_faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
+	return detect_faces;
+}
+
 void FaceTracking::createDirectory(VideoCapture &capture, FileStorage &fs, Mat &last_gray, vector<Rect> &faces, vector<TLD_Info> &vtld_info, int &dirCounter, double &frame_num, string dirName)
 {
+	std::cout << "in" << std::endl;
 	Mat frame;
 	while (faces.size() == 0) {
 		capture >> frame;
-		frame_num += 3;
-		capture.set(CV_CAP_PROP_POS_FRAMES, frame_num);
+		//frame_num += 3;
+		//capture.set(CV_CAP_PROP_POS_FRAMES, frame_num);
 		cvtColor(frame, last_gray, CV_RGB2GRAY);
 		faces = faceDetection(last_gray);
 	}
@@ -37,6 +49,7 @@ void FaceTracking::createDirectory(VideoCapture &capture, FileStorage &fs, Mat &
 		if (faces[i].x < 0 || faces[i].y < 0 ||
 			(faces[i].x + faces[i].width) > frame.cols ||
 			(faces[i].y + faces[i].height) > frame.rows) {
+			faces.erase(faces.begin() + i);
 			continue;
 		}
 
@@ -45,10 +58,10 @@ void FaceTracking::createDirectory(VideoCapture &capture, FileStorage &fs, Mat &
 		tempTLD->read(fs.getFirstTopLevelNode());
 		tempTLD->init(last_gray, faces[i]);
 		// set TLD information: TLD dirCounter fileCounter remainFrame
-		setTLD_Info(tempTLD_Info, tempTLD, dirCounter, 2, 2);
+		setTLD_Info(tempTLD_Info, tempTLD, dirCounter, 2, 4);
 		sprintf(dirPath, "./%s/%03d/", dirName.c_str(), dirCounter);
 		mkdir(dirPath);
-		
+
 		Mat face_image = frame(faces[i]);
 		sprintf(filePath, "./%s/%03d/%03d.jpg", dirName.c_str(), dirCounter, 1);
 		imwrite(filePath, face_image);
@@ -82,11 +95,6 @@ void FaceTracking::setTLD_Info(TLD_Info &tld_info, TLD *tld, int dirCounter, int
 	tld_info.remainFrame = remainFrame;
 }
 
-void FaceTracking::setVideoCapture(String video_name)
-{
-	
-}
-
 void FaceTracking::freeTLD_Info(vector<TLD_Info> &vtld_info)
 {
 	for (size_t i = 0; i < vtld_info.size(); i++) {
@@ -109,10 +117,10 @@ void FaceTracking::run()
 	int skip_msecs = 0;
 	int dirCounter = 1;
 	double frame_num = 0;
+
 	Mat frame;
 	Mat last_gray;
 	// save detect face
-	vector<Rect> faces;
 
 	char mainDir[30];
 	memset(mainDir, '\0', 30);
@@ -127,14 +135,14 @@ void FaceTracking::run()
 	bool status = true;
 	bool tl = true;
 
-	int remainFrame = 2;
+	int remainFrame = 5;
 
 	while (capture.read(frame)) {
-		frame_num += 3;
-		capture.set(CV_CAP_PROP_POS_FRAMES, frame_num);
+		//frame_num += 3;
+		//capture.set(CV_CAP_PROP_POS_FRAMES, frame_num);
 		cvtColor(frame, current_gray, CV_RGB2GRAY);
 
-		if (remainFrame > 0) {
+		if (remainFrame > 0 && vtld_info.size() > 0) {
 			// correct_num caculate how many faces should we track
 			int correct_num = 0;
 			for (size_t i = 0; i < vtld_info.size(); i++) {
@@ -146,15 +154,23 @@ void FaceTracking::run()
 
 				// success tracking
 				if (status) {
+					if (pbox.x < 0 || pbox.y < 0 || (pbox.x + pbox.width) > frame.cols ||
+						(pbox.y + pbox.height) > frame.rows) {
+						delete vtld_info[i].tld;
+						vtld_info.erase(vtld_info.begin() + i);
+						continue;
+					}
 					Mat face_image = frame(pbox);
 					// Test Code
-					//
-					if (tempTLD_Info.fileCounter % 10 == 0) {
+					if (tempTLD_Info.fileCounter % 5 == 0) {
+						//vector<Rect>().swap(faces);
 						faces = faceDetection(face_image);
-						if (faces.size() == 0) {
-							--correct_num; // if (correct_num != vtld_info.size()), stop
-										   // tracking
-							remainFrame = 0;
+						if (faces.size() == 0 && faces.size() != vtld_info.size()) {
+							correct_num = -1; // if (correct_num != vtld_info.size()), stop
+										     // tracking
+							remainFrame = -1;
+							pts1.clear();
+							pts2.clear();
 							break;
 						}
 					}
@@ -163,8 +179,8 @@ void FaceTracking::run()
 					imwrite(filePath, face_image);
 					++tempTLD_Info.fileCounter;
 					vtld_info[i] = tempTLD_Info;
-					// show video tracking state
 
+					// show video tracking state
 					drawPoints(frame, pts1);
 					drawPoints(frame, pts2, Scalar(0, 255, 0));
 					drawBox(frame, pbox);
@@ -172,16 +188,18 @@ void FaceTracking::run()
 					if (waitKey(10) >= 0) {
 						break;
 					}
-
-					pts1.clear();
-					pts2.clear();
 					++correct_num;
 				}
+				else {
+					--correct_num;
+				}
 			}
+			pts1.clear();
+			pts2.clear();
 
 			// if program can't detect
 			if (correct_num == vtld_info.size()) {
-				remainFrame = 2;
+				remainFrame = 5;
 			}
 			else {
 				--remainFrame;
@@ -189,29 +207,22 @@ void FaceTracking::run()
 			swap(last_gray, current_gray);
 		}
 		else {
+			std::cout << "Restart 1" << std::endl;
 			// erase vector
 			vector<Point2f>().swap(pts1);
 			vector<Point2f>().swap(pts2);
 			freeTLD_Info(vtld_info);
+			std::cout << "Restart 2" << std::endl;
 			vector<TLD_Info>().swap(vtld_info);
-			vector<Rect>().swap(faces);
+			//vector<Rect>().swap(faces);
+			std::cout << "Restart 3" << std::endl;
 			createDirectory(capture, fs, last_gray, faces, vtld_info, dirCounter,
 				frame_num, dirName);
-			remainFrame = 2;
+			std::cout << "Restart 4" << std::endl;
+			remainFrame = 5;
+			std::cout << "Restart 5" << std::endl;
 		}
 		// imshow("Test", frame);
 		// waitKey(1);
 	}
-	
-}
-
-vector<Rect> FaceTracking::faceDetection(Mat frame)
-{
-	CascadeClassifier face_cascade;
-	vector<Rect> faces;
-	if (!face_cascade.load(face_cascade_name)) {
-		printf("Error Loading");
-	}
-	face_cascade.detectMultiScale(frame, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
-	return faces;
 }

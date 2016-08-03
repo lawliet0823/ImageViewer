@@ -223,6 +223,11 @@ void FaceRecognition::train_model(int ptrain_num)
 	svm_save_model("Resources/model.txt", model);
 }
 
+void FaceRecognition::recognition()
+{
+	
+}
+
 void FaceRecognition::setTrainImage(vector<Mat> pTrainImage)
 {
 	trainImage = pTrainImage;
