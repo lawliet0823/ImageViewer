@@ -244,3 +244,17 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /ImageViewer/LFW
+/ImageViewer/Detect_Data/Clip13
+/ImageViewer/Detect_Data/Clip12
+/ImageViewer/Detect_Data/Clip11
+/ImageViewer/Detect_Data/Clip10
+/ImageViewer/Detect_Data/Clip09
+/ImageViewer/Detect_Data/Clip08
+/ImageViewer/Detect_Data/Clip07
+/ImageViewer/Detect_Data/Clip06
+/ImageViewer/Detect_Data/Clip05
+/ImageViewer/Detect_Data/Clip04
+/ImageViewer/Detect_Data/Clip03
+/ImageViewer/Detect_Data/Clip02
+/ImageViewer/Detect_Data/Clip01
+/ImageViewer/Temp

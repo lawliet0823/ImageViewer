@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	ui(new Ui::MainWindow)
 {
+	face_track = new FaceTracking();
 	face_assess = new FaceAssessment();
 	face_recog = new FaceRecognition();
 	ui->setupUi(this);
@@ -28,6 +29,46 @@ MainWindow::~MainWindow()
 
 }
 
+void MainWindow::setSelectLabel()
+{
+	if (layout != NULL) {
+		QLayoutItem *item;
+		while ((item = layout->takeAt(0)) != NULL) {
+			item->widget()->hide();
+			//delete item->widget();
+			delete item;
+		}
+		grid_x = 0;
+		grid_y = 0;
+	}
+
+	map<QString, vector<Mat>>::iterator it_assess = selectMap.begin();
+	for (; it_assess != selectMap.end(); it_assess++) {
+		ImageLabel *imgLabel = new ImageLabel();
+		// set ImageLabel signal
+		connect(imgLabel, SIGNAL(clicked()), imgLabel, SLOT(setBorderSlot()));
+		cout << it_assess->second.size() << endl;
+
+		// ImageLabel Layout Setting
+		Mat resize_image;
+		cv::resize(it_assess->second.at(0), resize_image, Size(250, 250));
+		QPixmap pix = ASM::cvMatToQPixmap(resize_image);
+		imgLabel->setPixmap(pix);
+		imgLabel->setFixedSize(250, 250);
+		layout->addWidget(imgLabel, grid_x, grid_y);
+		widget->setLayout(layout);
+		ui->imageScroll->setWidget(widget);
+
+		if (grid_y < 3)
+			grid_y++;
+		if (grid_y == 3) {
+			grid_y = 0;
+			grid_x++;
+		}
+		searchMap.insert(make_pair(imgLabel, it_assess->second));
+	}
+}
+
 // call Face Tracking Program
 void MainWindow::faceTracking() {
 	// Read Video File
@@ -36,18 +77,20 @@ void MainWindow::faceTracking() {
 	// Check File Name is empty or not
 	if (filename.size() == 0)
 		return;
+
 	// QString to String
 	string convertString = filename.toUtf8().constData();
-	face_track = new FaceTracking();
+	size_t found = convertString.find_last_of("/\\");
+	string dirNameString = convertString.substr(found + 1);
+	dirNameString = dirNameString.substr(0, dirNameString.find("."));
 	face_track->setVideoName(convertString);
-	// TODO XXX: need to check convertString value
-	//face_track->setDirName(convertString);
+	face_track->setDirName(dirNameString);
 	face_track->run();
 }
 
 // Read File
 void MainWindow::readFile() {
-	// Check listview state
+	// Clear List View
 	stdItemModel->removeRows(0, stdItemModel->rowCount());
 	QString dirname = QFileDialog::getExistingDirectory(this, tr("Select Clip Directory"));
 	QStringList strList;
@@ -73,15 +116,15 @@ void MainWindow::faceAssessment() {
 		meg.exec();
 		return;
 	}
-	int num = 200;
-	int counter = 0;
-	ui->progressBar->setRange(0, num);
+	//int num = 200;
+	//int counter = 0;
+	//ui->progressBar->setRange(0, num);
 	map<QString, map<QString, Mat>> tempMap;
 	//map<QString, vector<Mat>> fileMatMap;
 	map<QString, QString>::iterator it_mapss = dirMap.begin();
 	for (; it_mapss != dirMap.end(); it_mapss++) {
 		//vector<Mat> tempMatMap;
-		map<QString, Mat> assessMap;
+		map<QString, Mat> prepareAssessMap;
 		QDirIterator it_dir(it_mapss->second);
 		while (it_dir.hasNext()) {
 			it_dir.next();
@@ -90,45 +133,79 @@ void MainWindow::faceAssessment() {
 			}
 			// Read Image
 			Mat image = imread(it_dir.filePath().toUtf8().toStdString());
-			assessMap.insert(make_pair(it_dir.filePath(), image));
-			++counter;
-			ui->progressBar->setValue(counter);
+			prepareAssessMap.insert(make_pair(it_dir.filePath(), image));
+			//++counter;
+			//ui->progressBar->setValue(counter);
 			//tempMatMap.push_back(image);
 		}
-		tempMap.insert(make_pair(it_mapss->first, assessMap));
+		tempMap.insert(make_pair(it_mapss->first, prepareAssessMap));
 		//fileMatMap.insert(make_pair(it_mapss->first, tempMatMap));
 	}
 	face_assess->setAssessMap(tempMap);
 	face_assess->run();
 	selectMap = face_assess->getSelectMap();
-	ui->progressBar->setValue(num);
+	//ui->progressBar->setValue(num);
 	cout << "Finish" << endl;
+	setSelectLabel();
 }
 
 void MainWindow::createModel() {
 	// clear vector element
-	trainImageVec.swap(vector<Mat>());
+	trainImageVec.clear();
+	vector<Mat> tempSaveMatVec;
+
+	// Random select image to train model depend on user choice
+	map<ImageLabel*, vector<Mat>>::iterator it_search = searchMap.begin();
+	for (; it_search != searchMap.end(); it_search++) {
+		if (it_search->first->isSelected()) {
+			tempSaveMatVec.reserve(tempSaveMatVec.size() + it_search->second.size());
+			tempSaveMatVec.insert(tempSaveMatVec.end(), it_search->second.begin(), it_search->second.end());
+		}
+	}
+	random_shuffle(tempSaveMatVec.begin(), tempSaveMatVec.end());
+
+	// Warning message: Training Image is not enough
+	if (tempSaveMatVec.size() < 25) {
+		QString text = QString("Need %1 Images\nPlease Select More Targeted Person Image or\n change another clip")
+			.arg(25 - tempSaveMatVec.size());
+		QMessageBox msgBox;
+		msgBox.setText(text);
+		msgBox.exec();
+		return;
+	}
+
+	else {
+		//Read other training image
+		QDirIterator it_dir("Training_Image");
+		while (it_dir.hasNext()) {
+			it_dir.next();
+			//strList.append(it_dir.next());
+			if (it_dir.fileName() == "." || it_dir.fileName() == "..") {
+				continue;
+			}
+			Mat image = imread(it_dir.filePath().toUtf8().toStdString(), 0);
+
+		}
+	}
+
+	/*
 	map<QString, vector<ImageLabel*>>::iterator it_label = labelMap.begin();
-	int total = labelMap.size() + 10;
-	ui->progressBar->setRange(0, total);
-	ui->progressBar->reset();
-	int counter = 0;
 	for (; it_label != labelMap.end(); it_label++) {
 		vector<ImageLabel*> labelVector = it_label->second;
 		for (size_t i = 0; i < labelVector.size(); i++) {
 			if (labelVector.at(i)->isSelected()) {
 				trainImageVec.push_back(labelVector.at(i)->getImage());
-				++counter;
-				ui->progressBar->setValue(counter);
 			}
 		}
 	}
 	face_recog->setTrainImage(trainImageVec);
 	face_recog->train_model(trainImageVec.size());
-	ui->progressBar->setValue(total);
+	*/
 }
 
+
 void MainWindow::listItemSelected(const QModelIndex &index) {
+	
 	if (index.isValid()) {
 		if (layout != NULL) {
 			QLayoutItem *item;
@@ -220,10 +297,22 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 		}
 		*/
 	}
-
+	
 }
 
 void MainWindow::faceRecognition() {
-	QThread::sleep(5);
-	ui->outputLabel->setText("Clip01");
+	ui->outputLabel->clear();
+	face_recog->recognition();
+	vector<string> targetDirString = face_recog->getTargetDirString();
+	if (targetDirString.empty()) {
+		ui->outputLabel->setText("Can't find targeted person!!!");
+	}
+	else {
+		for (size_t i = 0; i < targetDirString.size(); i++) {
+			QString appendString = ui->outputLabel->text();
+			QString convertString = QString::fromStdString(targetDirString.at(i));
+			appendString.append("\t" + convertString);
+			ui->outputLabel->setText(appendString);
+		}
+	}
 }

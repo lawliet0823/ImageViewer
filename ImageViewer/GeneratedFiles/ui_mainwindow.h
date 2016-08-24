@@ -96,10 +96,10 @@ public:
         label_2->setGeometry(QRect(30, 10, 101, 16));
         label_3 = new QLabel(centralWidget);
         label_3->setObjectName(QStringLiteral("label_3"));
-        label_3->setGeometry(QRect(30, 460, 47, 12));
+        label_3->setGeometry(QRect(30, 490, 47, 12));
         outputLabel = new QLabel(centralWidget);
         outputLabel->setObjectName(QStringLiteral("outputLabel"));
-        outputLabel->setGeometry(QRect(30, 490, 781, 141));
+        outputLabel->setGeometry(QRect(30, 510, 781, 141));
         outputLabel->setStyleSheet(QStringLiteral("border: 2px solid grey"));
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);

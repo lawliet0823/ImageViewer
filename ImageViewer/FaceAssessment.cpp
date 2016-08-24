@@ -19,6 +19,7 @@ vector<Rect> FaceAssessment::faceDetection(Mat image)
 		printf("Error Loading");
 	}
 	face_cascade.detectMultiScale(image, rect_faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
+	cout << rect_faces.size() << endl;
 	return rect_faces;
 }
 
@@ -119,22 +120,22 @@ map<QString, Mat> FaceAssessment::caculateSharpness(map<QString, Mat> infoMap)
 	map<QString, Mat> returnMap;
 	map<float, QString> mfs_score;
 	map<QString, Mat>::iterator it_info = infoMap.begin();
-	float max_score = INT_MIN;
+	float min_score = INT_MAX;
 
 	for (; it_info != infoMap.end(); it_info++) {
 		double score = 0;
 		QString file_name = it_info->first;
 		Mat face_image = it_info->second;
 		score = caculateSharpness(face_image);
-		if (score > max_score) {
-			max_score = score;
+		if (score < min_score) {
+			min_score = score;
 		}
 		mfs_score.insert(make_pair(score, file_name));
 	}
 
 	map<float, QString>::iterator it_mfs = mfs_score.begin();
 	for (; it_mfs != mfs_score.end(); it_mfs++) {
-		if (it_mfs->first / max_score > 0.9) {
+		if (min_score / it_mfs->first > 0.8) {
 			returnMap.insert(make_pair(it_mfs->second, infoMap.find(it_mfs->second)->second));
 		}
 	}
@@ -226,26 +227,39 @@ void FaceAssessment::setProgressMax(double pProgressMax)
 	progressMax = pProgressMax;
 }
 
-void FaceAssessment::run()
-{
+void FaceAssessment::run() {
+	CascadeClassifier face_cascade;
+	if (!face_cascade.load(face_cascade_name)) {
+		printf("Error Loading");
+	}
+	vector<Rect> faces;
+	// return value
 	selectMap.clear();
 	map<QString, Mat> inputMap;
+	// Directory Name, <Directory Path, Image>
 	map<QString, map<QString, Mat>>::iterator it_assessMap = assessMap.begin();
+
+	// Read Data According to Directory Name
 	for (; it_assessMap != assessMap.end(); it_assessMap++) {
+		cout << "in" << endl;
 		map<QString, Mat>::iterator it_inputMap = it_assessMap->second.begin();
+		// Read Data According to File Name
 		for (; it_inputMap != it_assessMap->second.end(); it_inputMap++) {
-			
+			cout << it_inputMap->first.toUtf8().toStdString() << endl;
 			Mat face_image = it_inputMap->second;
 			if (face_image.empty()) {
 				cout << "Image read error" << endl;
 				continue;
 			}
+
+			face_cascade.detectMultiScale(face_image, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
 			//faces.swap(vector<Rect>());
-			faces = faceDetection(face_image);
+			//faces = faceDetection(face_image);
 			if (faces.empty()) {
 				cout << "Face Detection Error" << endl;
 				continue;
 			}
+
 			Mat gray_image;
 			cvtColor(face_image, gray_image, CV_RGB2GRAY);
 			double *landmarks = landmarkDetection(gray_image, faces.at(0));
@@ -257,8 +271,16 @@ void FaceAssessment::run()
 			if (face_image.rows >= 100 && face_image.cols >= 100) {
 				inputMap.insert(make_pair(it_inputMap->first, face_image));
 			}
-			cout << "123" << endl;
+			cout << "Quit" << endl;
 		}
+
+		if (inputMap.size() < 5) {
+			inputMap.clear();
+			cout << "clear" << endl;
+			continue;
+		}
+
+		// Transfer map<QString, Mat> to vector<Mat>
 		map<QString, Mat> outputMap = caculateBrightness(caculateSharpness(caculateSymmetry(inputMap)));
 		map<QString, Mat>::iterator it_output = outputMap.begin();
 		vector<Mat> imageVector;
@@ -270,7 +292,6 @@ void FaceAssessment::run()
 		imageVector.clear();
 		inputMap.clear();
 		outputMap.clear();
-		cout << "456" << endl;
 	}
 }
 

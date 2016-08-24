@@ -47,10 +47,11 @@ private:
 	FLANDMARK_Model *landmarkModel;
 	double progressMin;
 	double progressMax;
-	map<QString, map<QString, Mat>> assessMap;
-	map<QString, vector<Mat>> selectMap;
-	vector<Rect> faces;
 	int total_count;
+	// Input Data
+	map<QString, map<QString, Mat>> assessMap;
+	// Output Data
+	map<QString, vector<Mat>> selectMap;
 };
 
 

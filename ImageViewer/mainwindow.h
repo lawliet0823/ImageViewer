@@ -29,6 +29,8 @@ public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
+	void setSelectLabel();
+
 	private slots:
 	void faceTracking();
 	void faceAssessment();
@@ -47,8 +49,13 @@ private:
 	FaceTracking *face_track;
 	FaceAssessment *face_assess;
 	FaceRecognition *face_recog;
-	map<QString, QString> dirMap;		// Directory Name, Directory Path
+	// Directory Name, Directory Path
+	map<QString, QString> dirMap;
+	// Directory Name, Image Vector
 	map<QString, vector<Mat>> selectMap;
+
+	map<ImageLabel*, vector<Mat>> searchMap;
+
 	map<QString, vector<ImageLabel*>> labelMap;
 	vector<Mat> trainImageVec;
 };

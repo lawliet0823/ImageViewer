@@ -24,7 +24,6 @@ vector<Rect> FaceTracking::faceDetection(Mat frame)
 
 void FaceTracking::createDirectory(VideoCapture &capture, FileStorage &fs, Mat &last_gray, vector<Rect> &faces, vector<TLD_Info> &vtld_info, int &dirCounter, double &frame_num, string dirName)
 {
-	std::cout << "in" << std::endl;
 	Mat frame;
 	while (faces.size() == 0) {
 		capture >> frame;
@@ -110,7 +109,8 @@ void FaceTracking::run()
 	if (!capture.isOpened()) {
 		return;
 	}
-	// vector<TLD*> vTLD;
+
+	// Initialize variable
 	vector<TLD_Info> vtld_info;
 	FileStorage fs;
 	fs.open("Resources/parameters.yml", FileStorage::READ);
@@ -120,7 +120,6 @@ void FaceTracking::run()
 
 	Mat frame;
 	Mat last_gray;
-	// save detect face
 
 	char mainDir[30];
 	memset(mainDir, '\0', 30);

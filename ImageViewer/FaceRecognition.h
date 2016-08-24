@@ -2,9 +2,11 @@
 #define FACERECOGNITION_H
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <iterator>
+#include <fstream>
+
+#include <QtCore/QtCore>
+#include <qmessagebox.h>
 
 #include <opencv2\opencv.hpp>
 #include <opencv2\core\core.hpp>
@@ -28,17 +30,24 @@ class FaceRecognition
 public:
 	FaceRecognition();
 	virtual ~FaceRecognition();
+
+	Mat lbpFeature(Mat);
+	Mat rotateImage(Mat src, double angle);
 	Rect getCropImageBound(double, double, int);
 	vector<Rect> faceDetection(Mat);
+	vector<string> getTargetDirString();
+	double getSkewness(double *landmarks);
 	double* landmarkDetection(Mat, Rect);
-	Mat lbpFeature(Mat);
-	inline bool isImgOutofBound(int, int, int, int , int);
-	void train_model(int);
+	double* landmarkRotation(double *landmarks, double angle, double midX, double midY);
+	inline bool isImgOutofBound(int, int, int, int, int);
+	void train_model(vector<Mat> posVector, vector<Mat> negVector);
 	void recognition();
 	void setTrainImage(vector<Mat>);
+	Mat getFeatureVector(Mat face_image);
+	inline svm_node* getSVM_Node(Mat face_image);
 
 private:
-	String face_cascade_name;
+	string face_cascade_name;
 	FLANDMARK_Model *landmarkModel;
 	int train_num;
 
@@ -48,6 +57,7 @@ private:
 
 	vector<Mat> trainImage;
 	vector<Rect> faces;
+	vector<string> targetDirString;
 };
 
 #endif // ! FACERECOGNITION_H
