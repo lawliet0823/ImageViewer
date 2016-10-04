@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1089</width>
-    <height>799</height>
+    <width>1116</width>
+    <height>867</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>30</y>
-      <width>781</width>
-      <height>401</height>
+      <y>40</y>
+      <width>831</width>
+      <height>421</height>
      </rect>
     </property>
     <property name="widgetResizable">
@@ -31,8 +31,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>779</width>
-       <height>399</height>
+       <width>829</width>
+       <height>419</height>
       </rect>
      </property>
     </widget>
@@ -40,21 +40,29 @@
    <widget class="QListView" name="listView">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>30</y>
-      <width>181</width>
-      <height>271</height>
+      <x>890</x>
+      <y>70</y>
+      <width>191</width>
+      <height>281</height>
      </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="btnReadFile">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>400</y>
+      <x>910</x>
+      <y>470</y>
       <width>161</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
     </property>
     <property name="text">
      <string>Read File</string>
@@ -63,11 +71,19 @@
    <widget class="QPushButton" name="btnFaceTracking">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>320</y>
+      <x>910</x>
+      <y>390</y>
       <width>161</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
     </property>
     <property name="text">
      <string>Face Tracking</string>
@@ -76,9 +92,9 @@
    <widget class="QProgressBar" name="progressBar">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>690</y>
-      <width>651</width>
+      <x>150</x>
+      <y>780</y>
+      <width>711</width>
       <height>31</height>
      </rect>
     </property>
@@ -89,11 +105,19 @@
    <widget class="QPushButton" name="btnFaceSelect">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>480</y>
+      <x>910</x>
+      <y>550</y>
       <width>161</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
     </property>
     <property name="text">
      <string>Face Assessment</string>
@@ -102,11 +126,19 @@
    <widget class="QPushButton" name="btnCreateModel">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>560</y>
+      <x>910</x>
+      <y>630</y>
       <width>161</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
     </property>
     <property name="text">
      <string>Create Model</string>
@@ -115,11 +147,19 @@
    <widget class="QPushButton" name="btnFaceRecognition">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>640</y>
+      <x>910</x>
+      <y>710</y>
       <width>161</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
     </property>
     <property name="text">
      <string>Face Recognition</string>
@@ -128,15 +168,19 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>690</y>
-      <width>81</width>
+      <x>30</x>
+      <y>780</y>
+      <width>101</width>
       <height>31</height>
      </rect>
     </property>
     <property name="font">
      <font>
+      <family>Arial</family>
       <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
      </font>
     </property>
     <property name="text">
@@ -148,41 +192,85 @@
      <rect>
       <x>30</x>
       <y>10</y>
-      <width>101</width>
-      <height>16</height>
+      <width>181</width>
+      <height>21</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
     <property name="text">
-     <string>Image Window</string>
+     <string>Image Display Window</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>490</y>
-      <width>47</width>
-      <height>12</height>
+      <y>472</y>
+      <width>121</width>
+      <height>20</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
     <property name="text">
-     <string>Output</string>
+     <string>Result Output</string>
     </property>
    </widget>
-   <widget class="QLabel" name="outputLabel">
+   <widget class="QScrollArea" name="outputScroll">
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>510</y>
-      <width>781</width>
-      <height>141</height>
+      <y>500</y>
+      <width>831</width>
+      <height>271</height>
      </rect>
     </property>
-    <property name="styleSheet">
-     <string notr="true">border: 2px solid grey</string>
+    <property name="widgetResizable">
+     <bool>true</bool>
+    </property>
+    <widget class="QWidget" name="scrollAreaWidgetContents_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>829</width>
+       <height>269</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>40</y>
+      <width>211</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="text">
-     <string/>
+     <string>Directory and File Display</string>
     </property>
    </widget>
   </widget>
@@ -191,7 +279,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1089</width>
+     <width>1116</width>
      <height>22</height>
     </rect>
    </property>

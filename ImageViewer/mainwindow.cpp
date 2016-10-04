@@ -11,8 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->setupUi(this);
 
 	// Layout Setup
-	layout = new QGridLayout;
-	widget = new QWidget;
+	image_layout = new QGridLayout;
+	image_widget = new QWidget;
+	output_layout = new QGridLayout;
+	output_widget = new QWidget;
 	stdItemModel = new QStandardItemModel(this);
 
 	// Signal and Slot
@@ -31,15 +33,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::setSelectLabel()
 {
-	if (layout != NULL) {
+	if (image_layout != NULL) {
 		QLayoutItem *item;
-		while ((item = layout->takeAt(0)) != NULL) {
+		while ((item = image_layout->takeAt(0)) != NULL) {
 			item->widget()->hide();
 			//delete item->widget();
 			delete item;
 		}
-		grid_x = 0;
-		grid_y = 0;
+		select_grid_x = 0;
+		select_grid_y = 0;
 	}
 
 	map<QString, vector<Mat>>::iterator it_assess = selectMap.begin();
@@ -55,15 +57,15 @@ void MainWindow::setSelectLabel()
 		QPixmap pix = ASM::cvMatToQPixmap(resize_image);
 		imgLabel->setPixmap(pix);
 		imgLabel->setFixedSize(250, 250);
-		layout->addWidget(imgLabel, grid_x, grid_y);
-		widget->setLayout(layout);
-		ui->imageScroll->setWidget(widget);
+		image_layout->addWidget(imgLabel, select_grid_x, select_grid_y);
+		image_widget->setLayout(image_layout);
+		ui->imageScroll->setWidget(image_widget);
 
-		if (grid_y < 3)
-			grid_y++;
-		if (grid_y == 3) {
-			grid_y = 0;
-			grid_x++;
+		if (select_grid_y < 3)
+			select_grid_y++;
+		if (select_grid_y == 3) {
+			select_grid_y = 0;
+			select_grid_x++;
 		}
 		searchMap.insert(make_pair(imgLabel, it_assess->second));
 	}
@@ -133,6 +135,9 @@ void MainWindow::faceAssessment() {
 			}
 			// Read Image
 			Mat image = imread(it_dir.filePath().toUtf8().toStdString());
+			if (image.empty()) {
+				continue;
+			}
 			prepareAssessMap.insert(make_pair(it_dir.filePath(), image));
 			//++counter;
 			//ui->progressBar->setValue(counter);
@@ -150,10 +155,9 @@ void MainWindow::faceAssessment() {
 }
 
 void MainWindow::createModel() {
-	// clear vector element
-	trainImageVec.clear();
-	vector<Mat> tempSaveMatVec;
 
+	// Save Image which user chooses
+	vector<Mat> tempSaveMatVec;
 	// Random select image to train model depend on user choice
 	map<ImageLabel*, vector<Mat>>::iterator it_search = searchMap.begin();
 	for (; it_search != searchMap.end(); it_search++) {
@@ -164,9 +168,12 @@ void MainWindow::createModel() {
 	}
 	random_shuffle(tempSaveMatVec.begin(), tempSaveMatVec.end());
 
+
+	vector<Mat> targetedImage;
+	vector<Mat> distinctionImage;
 	// Warning message: Training Image is not enough
 	if (tempSaveMatVec.size() < 25) {
-		QString text = QString("Need %1 Images\nPlease Select More Targeted Person Image or\n change another clip")
+		QString text = QString("Need %1 Images\nPlease Select More Targeted Person Image or\n change another video")
 			.arg(25 - tempSaveMatVec.size());
 		QMessageBox msgBox;
 		msgBox.setText(text);
@@ -175,8 +182,13 @@ void MainWindow::createModel() {
 	}
 
 	else {
+
+		for (size_t i = 0; i < 25; i++) {
+			targetedImage.push_back(tempSaveMatVec.at(i));
+		}
+
 		//Read other training image
-		QDirIterator it_dir("Training_Image");
+		QDirIterator it_dir("Training_Image_1");
 		while (it_dir.hasNext()) {
 			it_dir.next();
 			//strList.append(it_dir.next());
@@ -184,8 +196,11 @@ void MainWindow::createModel() {
 				continue;
 			}
 			Mat image = imread(it_dir.filePath().toUtf8().toStdString(), 0);
-
+			if (!image.empty()) {
+				distinctionImage.push_back(image);
+			}
 		}
+		face_recog->train_model(targetedImage, distinctionImage);
 	}
 
 	/*
@@ -205,17 +220,17 @@ void MainWindow::createModel() {
 
 
 void MainWindow::listItemSelected(const QModelIndex &index) {
-	
+
 	if (index.isValid()) {
-		if (layout != NULL) {
+		if (image_layout != NULL) {
 			QLayoutItem *item;
-			while ((item = layout->takeAt(0)) != NULL) {
+			while ((item = image_layout->takeAt(0)) != NULL) {
 				item->widget()->hide();
 				//delete item->widget();
 				delete item;
 			}
-			grid_x = 0;
-			grid_y = 0;
+			select_grid_x = 0;
+			select_grid_y = 0;
 		}
 
 		//qDebug() << index.data().toString();
@@ -235,14 +250,14 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 				imgLabel->setPixmap(pix);
 				imgLabel->setFixedSize(250, 250);
 				labelVecor.push_back(imgLabel);
-				layout->addWidget(imgLabel, grid_x, grid_y);
-				widget->setLayout(layout);
-				ui->imageScroll->setWidget(widget);
-				if (grid_y < 3)
-					grid_y++;
-				if (grid_y == 3) {
-					grid_y = 0;
-					grid_x++;
+				image_layout->addWidget(imgLabel, select_grid_x, select_grid_y);
+				image_widget->setLayout(image_layout);
+				ui->imageScroll->setWidget(image_widget);
+				if (select_grid_y < 3)
+					select_grid_y++;
+				if (select_grid_y == 3) {
+					select_grid_y = 0;
+					select_grid_x++;
 				}
 			}
 			labelMap.insert(make_pair(index.data().toString(), labelVecor));
@@ -253,15 +268,15 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 			//qDebug() << labelVecor.at(0) << " else";
 			for (size_t i = 0; i < tempLabelVecor.size(); i++) {
 				tempLabelVecor.at(i)->show();
-				layout->addWidget(tempLabelVecor.at(i), grid_x, grid_y);
-				widget->setLayout(layout);
-				ui->imageScroll->setWidget(widget);
+				image_layout->addWidget(tempLabelVecor.at(i), select_grid_x, select_grid_y);
+				image_widget->setLayout(image_layout);
+				ui->imageScroll->setWidget(image_widget);
 				//ui->imageScroll->setLayout(layout);
-				if (grid_y < 3)
-					grid_y++;
-				if (grid_y == 3) {
-					grid_y = 0;
-					grid_x++;
+				if (select_grid_y < 3)
+					select_grid_y++;
+				if (select_grid_y == 3) {
+					select_grid_y = 0;
+					select_grid_x++;
 				}
 			}
 		}
@@ -297,22 +312,56 @@ void MainWindow::listItemSelected(const QModelIndex &index) {
 		}
 		*/
 	}
-	
+
 }
 
 void MainWindow::faceRecognition() {
-	ui->outputLabel->clear();
 	face_recog->recognition();
-	vector<string> targetDirString = face_recog->getTargetDirString();
-	if (targetDirString.empty()) {
-		ui->outputLabel->setText("Can't find targeted person!!!");
+	//vector<string> targetDirString = face_recog->getTargetDirString();
+	map<string, vector<Mat>> targetMap = face_recog->getTargetMap();
+	map<string, vector<Mat>>::iterator it_target = targetMap.begin();
+
+	if (targetMap.empty()) {
+		QMessageBox msg;
+		msg.setText("Can't find targeted person!!!");
+		msg.exec();
+		return;
 	}
 	else {
-		for (size_t i = 0; i < targetDirString.size(); i++) {
-			QString appendString = ui->outputLabel->text();
-			QString convertString = QString::fromStdString(targetDirString.at(i));
-			appendString.append("\t" + convertString);
-			ui->outputLabel->setText(appendString);
+		
+		if (output_layout != NULL) {
+			QLayoutItem *item;
+			while ((item = output_layout->takeAt(0)) != NULL) {
+				item->widget()->hide();
+				delete item;
+			}
+			output_grid_x = 0;
+			output_grid_y = 0;
+		}
+
+		for (; it_target != targetMap.end(); it_target++) {
+			for (size_t i = 0; i < it_target->second.size(); i++) {
+				ImageLabel *imgLabel = new ImageLabel();
+				Mat resize_image;
+				cv::resize(it_target->second.at(i), resize_image, Size(250, 250));
+				QPixmap pix = ASM::cvMatToQPixmap(resize_image);
+				QImage temp = pix.toImage();
+				QPainter *painter = new QPainter(&temp);
+				painter->setPen(Qt::blue);
+				painter->setFont(QFont("Arial", 20));
+				painter->drawText(temp.rect(), Qt::AlignCenter, QString::fromStdString(it_target->first));
+				imgLabel->setPixmap(QPixmap::fromImage(temp));
+				imgLabel->setFixedSize(250, 250);
+				output_layout->addWidget(imgLabel, output_grid_x, output_grid_y);
+				output_widget->setLayout(output_layout);
+				ui->outputScroll->setWidget(output_widget);
+				if (output_grid_y < 3)
+					output_grid_y++;
+				if (output_grid_y == 3) {
+					output_grid_y = 0;
+					output_grid_x++;
+				}
+			}
 		}
 	}
 }

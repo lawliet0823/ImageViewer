@@ -3,6 +3,7 @@
 
 #include <QtCore/QtCore>
 #include <qlabel.h>
+#include <qpainter.h>
 #include <opencv2\core\core.hpp>
 
 using namespace cv;
@@ -17,6 +18,7 @@ public:
 	bool isSelected();
 	void setSelected(bool);
 	void setImage(Mat);
+	void setDisplayText(QString);
 	Mat getImage();
 
 signals:
@@ -27,10 +29,12 @@ signals:
 
 protected:
 	void mousePressEvent(QMouseEvent *event);
+	//void paintEvent(QPaintEvent *event);
 
 private:
 	bool selected;
 	Mat image;
+	QString displayText;
 };
 
 #endif // IMAGELABEL_H

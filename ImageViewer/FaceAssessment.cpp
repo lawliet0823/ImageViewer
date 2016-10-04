@@ -228,12 +228,15 @@ void FaceAssessment::setProgressMax(double pProgressMax)
 }
 
 void FaceAssessment::run() {
+
+	// OpenCV CascadeClassifier Setup
 	CascadeClassifier face_cascade;
+	vector<Rect> faces;
 	if (!face_cascade.load(face_cascade_name)) {
 		printf("Error Loading");
 	}
-	vector<Rect> faces;
-	// return value
+
+	// Return Selected Image
 	selectMap.clear();
 	map<QString, Mat> inputMap;
 	// Directory Name, <Directory Path, Image>
@@ -251,10 +254,8 @@ void FaceAssessment::run() {
 				cout << "Image read error" << endl;
 				continue;
 			}
-
+			faces.clear();
 			face_cascade.detectMultiScale(face_image, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cvSize(90, 90));
-			//faces.swap(vector<Rect>());
-			//faces = faceDetection(face_image);
 			if (faces.empty()) {
 				cout << "Face Detection Error" << endl;
 				continue;
@@ -263,7 +264,7 @@ void FaceAssessment::run() {
 			Mat gray_image;
 			cvtColor(face_image, gray_image, CV_RGB2GRAY);
 			double *landmarks = landmarkDetection(gray_image, faces.at(0));
-			if (landmarks < 0) {
+			if (*landmarks < 0) {
 				cout << "Landmark Detection Error" << endl;
 				continue;
 			}
@@ -294,4 +295,3 @@ void FaceAssessment::run() {
 		outputMap.clear();
 	}
 }
-

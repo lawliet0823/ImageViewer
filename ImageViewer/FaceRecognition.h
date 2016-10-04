@@ -35,14 +35,13 @@ public:
 	Mat rotateImage(Mat src, double angle);
 	Rect getCropImageBound(double, double, int);
 	vector<Rect> faceDetection(Mat);
-	vector<string> getTargetDirString();
+	map<string, vector<Mat>> getTargetMap();
 	double getSkewness(double *landmarks);
 	double* landmarkDetection(Mat, Rect);
 	double* landmarkRotation(double *landmarks, double angle, double midX, double midY);
 	inline bool isImgOutofBound(int, int, int, int, int);
 	void train_model(vector<Mat> posVector, vector<Mat> negVector);
 	void recognition();
-	void setTrainImage(vector<Mat>);
 	Mat getFeatureVector(Mat face_image);
 	inline svm_node* getSVM_Node(Mat face_image);
 
@@ -57,7 +56,8 @@ private:
 
 	vector<Mat> trainImage;
 	vector<Rect> faces;
-	vector<string> targetDirString;
+	//vector<string> targetDirString;
+	map<string, vector<Mat>> targetMap;
 };
 
 #endif // ! FACERECOGNITION_H

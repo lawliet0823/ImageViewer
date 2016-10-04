@@ -41,11 +41,15 @@ public:
 
 private:
 	Ui::MainWindow *ui;
-	QWidget *widget;
-	QGridLayout *layout;
+	QWidget *image_widget;
+	QWidget *output_widget;
+	QGridLayout *image_layout;
+	QGridLayout *output_layout;
 	QStandardItemModel *stdItemModel;
-	int grid_x = 0;
-	int grid_y = 0;
+	int select_grid_x = 0;
+	int select_grid_y = 0;
+	int output_grid_x = 0;
+	int output_grid_y = 0;
 	FaceTracking *face_track;
 	FaceAssessment *face_assess;
 	FaceRecognition *face_recog;
@@ -57,7 +61,6 @@ private:
 	map<ImageLabel*, vector<Mat>> searchMap;
 
 	map<QString, vector<ImageLabel*>> labelMap;
-	vector<Mat> trainImageVec;
 };
 
 #endif // MAINWINDOW_H

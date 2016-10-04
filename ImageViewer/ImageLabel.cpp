@@ -1,13 +1,11 @@
 #include "ImageLabel.h"
 
 ImageLabel::ImageLabel(QWidget *parent)
-	: QLabel(parent)
-{
+	: QLabel(parent) {
 	selected = false;
 }
 
-ImageLabel::~ImageLabel()
-{
+ImageLabel::~ImageLabel() {
 
 }
 
@@ -23,6 +21,10 @@ void ImageLabel::setImage(Mat pImage) {
 	image = pImage;
 }
 
+void ImageLabel::setDisplayText(QString text) {
+	displayText = text;
+}
+
 Mat ImageLabel::getImage() {
 	return image;
 }
@@ -33,7 +35,7 @@ void ImageLabel::setBorderSlot() {
 		selected = false;
 	}
 	else {
-		this->setStyleSheet("QLabel {border-style: solid; border-width: 5px; border-color: green;}");
+		this->setStyleSheet("QLabel {border-style: solid; border-width: 5px; border-color: red;}");
 		selected = true;
 	}
 }
@@ -41,3 +43,16 @@ void ImageLabel::setBorderSlot() {
 void ImageLabel::mousePressEvent(QMouseEvent *event) {
 	emit clicked();
 }
+
+/*
+void ImageLabel::paintEvent(QPaintEvent * event) {
+	
+	QPainter painter(this);
+	painter.setPen(QColor(0, 160, 230));
+	QFont font;
+	font.setPointSize(30);
+	painter.setFont(font);
+	painter.drawText(rect(), Qt::AlignCenter, displayText);
+}
+
+*/

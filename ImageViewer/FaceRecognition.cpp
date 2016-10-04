@@ -46,8 +46,8 @@ vector<Rect> FaceRecognition::faceDetection(Mat image)
 	return faces;
 }
 
-vector<string> FaceRecognition::getTargetDirString() {
-	return targetDirString;
+map<string, vector<Mat>> FaceRecognition::getTargetMap() {
+	return targetMap;
 }
 
 double FaceRecognition::getSkewness(double * landmarks) {
@@ -148,10 +148,11 @@ void FaceRecognition::train_model(vector<Mat> posVector, vector<Mat> negVector) 
 void FaceRecognition::recognition() {
 
 	// Clear Output Result Vector
-	targetDirString.clear();
+	targetMap.clear();
 	double count = 1;
 	double correct_num = 0;
 	double total_num = 0;
+	int findNumCount = 1;
 
 	svm_model *model = svm_load_model("Resources/model.txt");
 	if (model == NULL) {
@@ -160,6 +161,8 @@ void FaceRecognition::recognition() {
 		msg.exec();
 		return;
 	}
+
+	map<string, int> tempMap;
 
 	// Search Detect_Data Directory
 	QDirIterator main_dir("Detect_Data");
@@ -173,12 +176,23 @@ void FaceRecognition::recognition() {
 		sprintf(assess_filename, "%s/%s", main_dir.filePath().toUtf8().toStdString().c_str(), "Assessment_Result.txt");
 		fstream read_stream(assess_filename);
 		string readString;
+		tempMap.clear();
 		while (getline(read_stream, readString)) {
 			istringstream isstream(readString);
 			string file_Location;
 			int label;
 			isstream >> file_Location >> label;
-			Mat image = imread("Detect_Data/" + file_Location, 0);
+			tempMap.insert(make_pair(file_Location, label));
+		}
+
+		map<string, int>::iterator it_temp = tempMap.begin();
+		Mat previous_image;
+		vector<Mat> images_vector;
+		for (; it_temp != tempMap.end(); it_temp++) {
+			string file_Location = it_temp->first;
+			int label = it_temp->second;
+			Mat image = imread("Detect_Data/" + file_Location);
+
 			cout << file_Location << endl;
 			if (image.empty()) {
 				cout << "Image read fail" << endl;
@@ -188,27 +202,36 @@ void FaceRecognition::recognition() {
 			if (label == count) {
 				++total_num;
 				double retval = svm_predict(model, getSVM_Node(image));
+				//cout << retval << "		" << file_Location << endl;
 				if (retval == 1) {
 					++correct_num;
 				}
+				image.copyTo(previous_image);
 			}
 			else {
 				if (correct_num >= 3) {
-					targetDirString.push_back(main_dir.fileName().toUtf8().toStdString());
+					cout << "find!!!______________________________________________________" << endl;
+					//targetDirString.push_back(main_dir.fileName().toUtf8().toStdString());
+					correct_num = 0;
+					total_num = 0;
+					count++;
+					it_temp--;
+					images_vector.push_back(previous_image);
+					char filePath[30];
+					memset(filePath, '\0', 30);
+					sprintf(filePath, "%03d.jpg", findNumCount);
+					imwrite(filePath, previous_image);
+					++findNumCount;
+					continue;
 				}
 				correct_num = 0;
 				total_num = 0;
 				count++;
-				return;
+				it_temp--;
 			}
-
 		}
+		targetMap.insert(make_pair(main_dir.fileName().toUtf8().toStdString(), images_vector));
 	}
-}
-
-void FaceRecognition::setTrainImage(vector<Mat> pTrainImage)
-{
-	trainImage = pTrainImage;
 }
 
 // Function will output two value: svm_node* or nullptr
