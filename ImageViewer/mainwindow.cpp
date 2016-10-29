@@ -188,7 +188,7 @@ void MainWindow::createModel() {
 		}
 
 		//Read other training image
-		QDirIterator it_dir("Training_Image_1");
+		QDirIterator it_dir("Training_Image");
 		while (it_dir.hasNext()) {
 			it_dir.next();
 			//strList.append(it_dir.next());
